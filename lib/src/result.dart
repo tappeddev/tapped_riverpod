@@ -35,3 +35,14 @@ sealed class Result<T> with _$Result<T> {
 
   bool get hasData => data != null;
 }
+
+extension ResultExtension<T> on Result<T> {
+  Result<T> withPreviousData(T previousData) {
+    return when(
+      initial: (_) => Result.initial(data: previousData),
+      loading: (_) => Result.loading(data: previousData),
+      success: (value) => Result.success(value),
+      failure: (error, _) => ResultFailure<T>(error, data: previousData),
+    );
+  }
+}
