@@ -1,0 +1,22 @@
+name: tapped_riverpod
+description: "Wrapper for Riverpod that provides basic functionality"
+version: 0.0.1
+homepage: tapped.dev
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  riverpod: ^3.0.0
+  freezed_annotation: ^3.1.0
+  async: ^2.13.0
+  uuid: ^4.5.1
+
+dev_dependencies:
+  build_runner: ^2.8.0
+  json_serializable: ^6.11.1
+  freezed: ^3.2.3
+  flutter_lints: ^6.0.0
+  test: ^1.26.3
+
+
