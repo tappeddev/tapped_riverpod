@@ -28,6 +28,6 @@ clear pattern for loading and result states.
 dependencies:
   tapped_riverpod:
     git:
-      url: github.com/tappeddev/tapped_riverpod.git
+      url: git@github.com:tappeddev/tapped_riverpod.git
       ref: main
 ```
