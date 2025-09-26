@@ -31,3 +31,33 @@ dependencies:
       url: git@github.com:tappeddev/tapped_riverpod.git
       ref: main
 ```
+
+## Custom Error Mapping
+
+To display user-friendly error messages based on different exception types, you can implement a **custom mapping** using
+an extension on `DisplayableError`:
+
+```dart
+extension DisplayableErrorExtension on DisplayableError {
+  String toMessage(BuildContext context) {
+    final i18n = I18.of(context);
+    final exception = this.exception;
+
+    // Example: Mapping for Appwrite errors
+    if (exception is AppwriteException) {
+      if (exception.type == "user_already_exists") {
+        return i10n.auth_register_user_exists_error;
+      }
+      if ([
+        "user_invalid_credentials",
+        "general_argument_invalid",
+      ].contains(exception.type)) {
+        return i10n.auth_login_invalid_credentials;
+      }
+    }
+
+    // Fallback for unknown errors
+    return i10n.error_something_went_wrong;
+  }
+}
+```
