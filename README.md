@@ -29,5 +29,5 @@ dependencies:
   tapped_riverpod:
     git:
       url: https://github.com/tappeddev/tapped_riverpod.git
-      ref: master
+      ref: main
 ```
