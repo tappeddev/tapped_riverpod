@@ -2,14 +2,13 @@ import 'dart:async' show Completer, unawaited;
 
 import 'package:async/async.dart' show CancelableOperation;
 import 'package:riverpod/riverpod.dart';
-import 'package:tapped_riverpod/src/result.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
   test("dispose should cancel all active operations", () async {
     final testNotifierProvider = NotifierProvider<_BaseTestNotifier, String>(
-          () => _BaseTestNotifier(),
+      () => _BaseTestNotifier(),
     );
 
     final container = ProviderContainer();
@@ -36,7 +35,7 @@ void main() {
 
     unawaited(
       notifier.runCatching<int>(
-            () async {
+        () async {
           await Future<void>.delayed(const Duration(milliseconds: 500));
 
           return 1;
@@ -58,7 +57,7 @@ void main() {
     expect(actualResult, const ResultLoading<int>());
 
     await notifier.runCatching<int>(
-          () async {
+      () async {
         await Future<void>.delayed(const Duration(milliseconds: 100));
 
         return 2;
@@ -78,14 +77,14 @@ void main() {
 
   test(
     "a canceled runCatching should never call setState or onSuccess",
-        () async {
+    () async {
       final notifier = _BaseTestNotifier();
 
       Result<int> actualResult = const ResultInitial();
 
       unawaited(
         notifier.runCatching<int>(
-              () async {
+          () async {
             await Future<void>.delayed(const Duration(seconds: 2));
 
             return 1;

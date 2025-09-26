@@ -1,0 +1,56 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+      - main
+
+# Cancel previous builds by only allowing one concurrent build per ref.
+concurrency:
+  group: tapped-riverpod-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    timeout-minutes: 5
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: kuhnroyal/flutter-fvm-config-action@v2
+        id: fvm-config-action
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+      - name: Analyze app
+        run: dart pub get && dart analyze
+
+  format:
+    timeout-minutes: 5
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: kuhnroyal/flutter-fvm-config-action@v2
+        id: fvm-config-action
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+      - name: Check formatting
+        run: find . -name "*.dart" ! -name "*.g.dart" ! -name "*.gen.dart" ! -name "*.gr.dart" ! -name "*.freezed.dart" ! -path '*/generated/*' ! -path '*/gen/*' | xargs dart format --set-exit-if-changed
+
+  test:
+    timeout-minutes: 5
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: kuhnroyal/flutter-fvm-config-action@v2
+        id: fvm-config-action
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+      - name: Check formatting
+        run: dart pub get && dart test
