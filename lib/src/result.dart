@@ -5,8 +5,6 @@ part 'result.freezed.dart';
 
 @freezed
 sealed class Result<T> with _$Result<T> {
-  const Result._();
-
   const factory Result.initial({T? data}) = ResultInitial;
 
   const factory Result.loading({T? data}) = ResultLoading;
@@ -15,7 +13,9 @@ sealed class Result<T> with _$Result<T> {
 
   const factory Result.failure(DisplayableError error, {T? data}) =
       ResultFailure;
+}
 
+extension ResultExtension<T> on Result<T> {
   bool get isLoading => this is ResultLoading<T>;
 
   bool get isSuccess => this is ResultSuccess<T>;
@@ -33,10 +33,13 @@ sealed class Result<T> with _$Result<T> {
     return null;
   }
 
-  bool get hasData => data != null;
-}
+  ResultSuccess<T>? asSuccessOrNull() {
+    if (isSuccess) {
+      return this as ResultSuccess<T>;
+    }
+    return null;
+  }
 
-extension ResultExtension<T> on Result<T> {
   Result<T> withPreviousData(T previousData) {
     return when(
       initial: (_) => Result.initial(data: previousData),
@@ -45,4 +48,6 @@ extension ResultExtension<T> on Result<T> {
       failure: (error, _) => ResultFailure<T>(error, data: previousData),
     );
   }
+
+  bool get hasData => data != null;
 }
