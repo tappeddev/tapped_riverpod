@@ -61,27 +61,5 @@ extension ResultExtension<T> on Result<T> {
     );
   }
 
-  /// Returns a copy of the current [Result] with the provided `data` value.
-  ///
-  /// If `data` is `null`, the current instance is returned unchanged.
-  /// Otherwise, a new state of the same type is created with the updated data.
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = Result<String>.failure(Exception("error"), data: "old");
-  /// final updated = result.copyWithData("new");
-  /// // -> Result.failure(Exception("error"), data: "new")
-  /// ```
-  Result<T> copyWithData(T? data) {
-    if (data == null) return this;
-
-    return map(
-      initial: (s) => ResultInitial(data: data),
-      loading: (s) => ResultLoading(data: data),
-      success: (s) => ResultSuccess(data),
-      failure: (s) => ResultFailure(s.error, data: data),
-    );
-  }
-
   bool get hasData => data != null;
 }
