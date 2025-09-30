@@ -83,5 +83,28 @@ extension ResultExtension<T> on Result<T> {
     );
   }
 
+  /// Creates a new [Result] instance of type [R] with its `data` overridden
+  /// by the provided [newData].
+  ///
+  /// Unlike [copyWithData], this method allows changing the data type,
+  /// which makes it useful when you need to transform or replace the
+  /// underlying data with a different type while keeping the current state
+  /// (initial, loading, success, or failure).
+  ///
+  /// Example:
+  /// ```dart
+  /// final result = Result<int>.success(42);
+  /// final overridden = result.overrideData<String>("answer");
+  /// // -> Result.success<String>("answer")
+  /// ```
+  Result<R> overrideData<R>(R newData) {
+    return map(
+      initial: (s) => ResultInitial(data: newData),
+      loading: (s) => ResultLoading(data: newData),
+      success: (s) => ResultSuccess(newData),
+      failure: (s) => ResultFailure(s.error, data: newData),
+    );
+  }
+
   bool get hasData => data != null;
 }
