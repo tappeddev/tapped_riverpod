@@ -106,5 +106,17 @@ extension ResultExtension<T> on Result<T> {
     );
   }
 
+  Result<R> mapData<R>(R Function(T data) mapper) {
+    return when(
+      initial: (data) =>
+          Result.initial(data: data == null ? null : mapper(data)),
+      loading: (data) =>
+          Result.loading(data: data == null ? null : mapper(data)),
+      success: (data) => Result.success(mapper(data)),
+      failure: (e, data) =>
+          Result.failure(e, data: data == null ? null : mapper(data)),
+    );
+  }
+
   bool get hasData => data != null;
 }
