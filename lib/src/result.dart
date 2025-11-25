@@ -5,6 +5,8 @@ part 'result.freezed.dart';
 
 @freezed
 sealed class Result<T> with _$Result<T> {
+  const Result._();
+
   const factory Result.initial({T? data}) = ResultInitial;
 
   const factory Result.loading({T? data}) = ResultLoading;
@@ -13,9 +15,7 @@ sealed class Result<T> with _$Result<T> {
 
   const factory Result.failure(DisplayableError error, {T? data}) =
       ResultFailure;
-}
 
-extension ResultExtension<T> on Result<T> {
   bool get isLoading => this is ResultLoading<T>;
 
   bool get isSuccess => this is ResultSuccess<T>;

@@ -186,8 +186,8 @@ return failure(_that.error,_that.data);case _:
 /// @nodoc
 
 
-class ResultInitial<T> implements Result<T> {
-  const ResultInitial({this.data});
+class ResultInitial<T> extends Result<T> {
+  const ResultInitial({this.data}): super._();
   
 
 @override final  T? data;
@@ -252,8 +252,8 @@ as T?,
 /// @nodoc
 
 
-class ResultLoading<T> implements Result<T> {
-  const ResultLoading({this.data});
+class ResultLoading<T> extends Result<T> {
+  const ResultLoading({this.data}): super._();
   
 
 @override final  T? data;
@@ -318,8 +318,8 @@ as T?,
 /// @nodoc
 
 
-class ResultSuccess<T> implements Result<T> {
-  const ResultSuccess(this.data);
+class ResultSuccess<T> extends Result<T> {
+  const ResultSuccess(this.data): super._();
   
 
 @override final  T data;
@@ -384,8 +384,8 @@ as T,
 /// @nodoc
 
 
-class ResultFailure<T> implements Result<T> {
-  const ResultFailure(this.error, {this.data});
+class ResultFailure<T> extends Result<T> {
+  const ResultFailure(this.error, {this.data}): super._();
   
 
  final  DisplayableError error;

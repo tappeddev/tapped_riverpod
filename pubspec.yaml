@@ -4,7 +4,7 @@ version: 0.0.1
 homepage: tapped.dev
 
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.8.0
 
 dependencies:
   riverpod: ^3.0.3
