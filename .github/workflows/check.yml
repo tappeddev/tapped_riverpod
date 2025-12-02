@@ -42,7 +42,7 @@ jobs:
         run: find . -name "*.dart" ! -name "*.g.dart" ! -name "*.gen.dart" ! -name "*.gr.dart" ! -name "*.freezed.dart" ! -path '*/generated/*' ! -path '*/gen/*' | xargs dart format --set-exit-if-changed
 
   test:
-    timeout-minutes: 5
+    timeout-minutes: 10
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -52,5 +52,5 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: ${{ env.FLUTTER_CHANNEL }}
-      - name: Check formatting
+      - name: Run tests
         run: dart pub get && dart test

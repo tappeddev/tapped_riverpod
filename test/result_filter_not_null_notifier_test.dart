@@ -1,4 +1,3 @@
-import 'package:tapped_riverpod/src/result_filter_not_null_notifier.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
@@ -9,6 +8,13 @@ void main() {
       initialState: ResultSuccess("Initial-Data"),
       fireUpdated: (_) {},
       expectedOutputs: ["Initial-Data"],
+    );
+
+    _test(
+      testName: "initial value should be null if there nothing else specified",
+      initialState: ResultInitial(),
+      fireUpdated: (_) {},
+      expectedOutputs: [null],
     );
 
     _test(
@@ -56,6 +62,46 @@ void main() {
       expectedOutputs: ["Initial-Data", "Data-2", "Data-3", "Data-4"],
     );
   });
+
+  test("Map data with different generic types", () {
+    final inner = NotifierProvider(() => _TestBaseNotifier(ResultInitial()));
+
+    final provider = NotifierProvider(
+      () => ResultFilterNotNullNotifier<String, bool>(
+        result: inner,
+        filterMap: (r) =>
+            r.mapOrNull(success: (d) => true, initial: (_) => false),
+      ),
+    );
+
+    final container = ProviderContainer();
+
+    addTearDown(container.dispose);
+
+    final events = <bool?>[];
+
+    container.listen<bool?>(
+      provider,
+      (previous, next) => events.add(next),
+      fireImmediately: true,
+    );
+
+    container.read(inner.notifier).setResult(ResultLoading());
+    container
+        .read(inner.notifier)
+        .setResult(
+          Result.failure(
+            DisplayableError(
+              exception: Exception("Expected error"),
+              stackTrace: StackTrace.current,
+            ),
+          ),
+        );
+
+    container.read(inner.notifier).setResult(ResultSuccess("Logged in"));
+
+    expect(events, [false, true]);
+  });
 }
 
 void _test({
@@ -68,7 +114,7 @@ void _test({
     final inner = NotifierProvider(() => _TestBaseNotifier(initialState));
 
     final provider = NotifierProvider(
-      () => ResultFilterNotNullNotifier<String>(
+      () => ResultFilterNotNullNotifier<String, String>(
         result: inner,
         filterMap: (r) => r.whenOrNull(success: (v) => v),
       ),

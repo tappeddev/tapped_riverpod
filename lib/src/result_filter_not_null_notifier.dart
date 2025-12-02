@@ -1,58 +1,44 @@
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 
-/// A notifier that listens to a `Result<T>` provider and exposes only a
-/// *filtered* value of type `T?`.
+/// A `Notifier` that listens to an inner `Result<I>` provider and exposes a
+/// mapped value of type `T?`, ignoring any updates where the mapping returns `null`.
 ///
-/// This is useful when you have a provider that emits `Result<T>` values
-/// (e.g. loading/success/error states), but another part of your UI or logic
-/// only cares about the **successful output**, and only when it is meaningful.
+/// This is useful when you want to react only to a subset of `Result` updates,
+/// e.g. only when the result is a `ResultSuccess` with valid data.
 ///
 /// The notifier:
-/// - **Subscribes** to the given `result` provider
-/// - Applies the `filterMap` function on each new value
-/// - **Updates its state only when `filterMap` returns a non-null value`**
-/// - Returns the filtered value initially by calling `filterMap` on the current state
+/// - Subscribes to the given `result` provider.
+/// - Applies the `filterMap` function to each incoming `Result<I>`.
+/// - Updates its `state` **only** when `filterMap` returns a non-null value.
+/// - Keeps the previous state when the mapping result is `null`.
 ///
-/// This prevents unnecessary updates when the result is not relevant.
+/// The initial state is computed by applying `filterMap` to the current value of
+/// the `result` provider at build time.
 ///
-/// ---
-/// ## Example
-///
-/// Imagine you have a provider that loads legal information:
-///
+/// Example:
 /// ```dart
-/// final provAgreeLegalInfo = NotifierProvider<LegalInfoNotifier, LegalInfoState>(
-///   () => LegalInfoNotifier(),
-/// );
-/// ```
-///
-/// The state contains:
-/// ```dart
-/// class LegalInfoState {
-///   final Result<bool?> agreeResult;
-///   LegalInfoState(this.agreeResult);
-/// }
-/// ```
-///
-/// You only want to expose the **successful agreeResult**, ignoring loading or errors.
-///
-/// ```dart
-/// final provAgreeResult = NotifierProvider(
-///   () => ResultFilterNotNullNotifier<bool?>(
-///     result: provAgreeLegalInfo.select((s) => s.agreeResult),
-///     filterMap: (result) => result.whenOrNull(
-///       success: (value) => value,   // Only emit when success
-///     ),
+/// final myNotifier = NotifierProvider(
+///   () => ResultFilterNotNullNotifier<String, int>(
+///     result: someResultProvider,
+///     filterMap: (result) {
+///       if (result is ResultSuccess<String>) {
+///         return int.tryParse(result.value); // only update when parsing works
+///       }
+///       return null;
+///     },
 ///   ),
 /// );
 /// ```
-class ResultFilterNotNullNotifier<T> extends Notifier<T?> {
-  final ProviderListenable<Result<T>> _inner;
-  final T? Function(Result<T>) _filterMap;
+///
+/// In this example, the notifier exposes `int?` values derived from successful
+/// results, but ignores failures and unparseable strings.
+class ResultFilterNotNullNotifier<I, T> extends Notifier<T?> {
+  final ProviderListenable<Result<I>> _inner;
+  final T? Function(Result<I>) _filterMap;
 
   ResultFilterNotNullNotifier({
-    required ProviderListenable<Result<T>> result,
-    required T? Function(Result<T>) filterMap,
+    required ProviderListenable<Result<I>> result,
+    required T? Function(Result<I>) filterMap,
   }) : _inner = result,
        _filterMap = filterMap;
 
