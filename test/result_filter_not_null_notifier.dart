@@ -1,4 +1,4 @@
-import 'package:tapped_riverpod/src/result_filter_notifier.dart';
+import 'package:tapped_riverpod/src/result_filter_not_null_notifier.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
@@ -68,7 +68,7 @@ void _test({
     final inner = NotifierProvider(() => _TestBaseNotifier(initialState));
 
     final provider = NotifierProvider(
-      () => ResultFilterNotifier<String>(
+      () => ResultFilterNotNullNotifier<String>(
         result: inner,
         filterMap: (r) => r.whenOrNull(success: (v) => v),
       ),

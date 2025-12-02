@@ -38,7 +38,7 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 ///
 /// ```dart
 /// final provAgreeResult = NotifierProvider(
-///   () => ResultFilterNotifier<bool?>(
+///   () => ResultFilterNotNullNotifier<bool?>(
 ///     result: provAgreeLegalInfo.select((s) => s.agreeResult),
 ///     filterMap: (result) => result.whenOrNull(
 ///       success: (value) => value,   // Only emit when success
@@ -46,11 +46,11 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 ///   ),
 /// );
 /// ```
-class ResultFilterNotifier<T> extends Notifier<T?> {
+class ResultFilterNotNullNotifier<T> extends Notifier<T?> {
   final ProviderListenable<Result<T>> _inner;
   final T? Function(Result<T>) _filterMap;
 
-  ResultFilterNotifier({
+  ResultFilterNotNullNotifier({
     required ProviderListenable<Result<T>> result,
     required T? Function(Result<T>) filterMap,
   }) : _inner = result,
