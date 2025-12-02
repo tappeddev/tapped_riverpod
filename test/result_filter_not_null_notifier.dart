@@ -12,22 +12,6 @@ void main() {
     );
 
     _test(
-      testName: "should emit changes",
-      initialState: ResultSuccess("Initial-Data"),
-      fireUpdated: (provider) {
-        provider
-          ..setResult(Result.loading())
-          ..setResult(Result.success("Data-2"))
-          ..setResult(Result.loading())
-          ..setResult(Result.success("Data-3"))
-          ..setResult(Result.success("Data-3"))
-          ..setResult(Result.loading())
-          ..setResult(Result.success("Data-4"));
-      },
-      expectedOutputs: ["Initial-Data", "Data-2", "Data-3", "Data-4"],
-    );
-
-    _test(
       testName: "should not change state when filterMap returns null",
       initialState: ResultSuccess("Initial-Data"),
       fireUpdated: (prov) {
@@ -54,6 +38,22 @@ void main() {
           ..setResult(Result.success("Data"));
       },
       expectedOutputs: ["Data"],
+    );
+
+    _test(
+      testName: "should emit changes",
+      initialState: ResultSuccess("Initial-Data"),
+      fireUpdated: (provider) {
+        provider
+          ..setResult(Result.loading())
+          ..setResult(Result.success("Data-2"))
+          ..setResult(Result.loading())
+          ..setResult(Result.success("Data-3"))
+          ..setResult(Result.success("Data-3"))
+          ..setResult(Result.loading())
+          ..setResult(Result.success("Data-4"));
+      },
+      expectedOutputs: ["Initial-Data", "Data-2", "Data-3", "Data-4"],
     );
   });
 }
