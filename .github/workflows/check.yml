@@ -52,5 +52,5 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: ${{ env.FLUTTER_CHANNEL }}
-      - name: Check formatting
+      - name: Run tests
         run: dart pub get && dart test

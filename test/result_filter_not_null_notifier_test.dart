@@ -11,10 +11,10 @@ void main() {
     );
 
     _test(
-      testName: "initial value should be correct if there is none",
+      testName: "initial value should be null if there nothing else specified",
       initialState: ResultInitial(),
       fireUpdated: (_) {},
-      expectedOutputs: [],
+      expectedOutputs: [null],
     );
 
     _test(
