@@ -3,7 +3,7 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('ResultFilterNotifier', () {
+  group('ResultFilterNotNullNotifier', () {
     _test(
       testName: "initial value should be correct",
       initialState: ResultSuccess("Initial-Data"),
