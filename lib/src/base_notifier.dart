@@ -2,16 +2,22 @@ import 'dart:async';
 
 import 'package:async/async.dart' show CancelableOperation;
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:riverpod/riverpod.dart';
-import 'package:tapped_riverpod/src/catching_executor.dart';
-import 'package:tapped_riverpod/src/result.dart';
+import 'package:tapped_riverpod/tapped_riverpod.dart';
 
 /// Base class for custom Notifiers that provides:
 /// - cancelable async operations
 /// - standardized error handling
 /// - helper for loading/success/failure Result states
 abstract class BaseNotifier<T> extends Notifier<T> {
-  final _catchingExecutor = CatchingExecutor();
+  late final CatchingExecutor _catchingExecutor;
+
+  /// The error logger that is used from [CatchingExecutor].
+  /// This can be overridden in:
+  ///   ProviderScope(
+  ///     overrides: BaseNotifier.errorLogger.overrideWithValue(myNewLogger),
+  ///     ...
+  ///   )
+  static Provider<OperationErrorLogger> get errorLogger => _errorLogger;
 
   @visibleForTesting
   Map<String, CancelableOperation<void>> get operations =>
@@ -20,6 +26,8 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   @mustCallSuper
   @override
   T build() {
+    _catchingExecutor = CatchingExecutor(errorLogger: ref.read(_errorLogger));
+
     // register cleanup when provider is disposed
     ref.onDispose(() {
       _catchingExecutor.cancelAllOperations();
@@ -75,4 +83,13 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   }
 
   void onDispose() {}
+}
+
+final _errorLogger = Provider<OperationErrorLogger>((ref) {
+  return _DummyOperationErrorLogger();
+});
+
+class _DummyOperationErrorLogger implements OperationErrorLogger {
+  @override
+  void logError(DisplayableError error) {}
 }

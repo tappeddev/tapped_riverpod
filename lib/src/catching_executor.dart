@@ -13,7 +13,12 @@ import 'package:uuid/uuid.dart';
 /// - provides callbacks for loading/success/error/cancel
 /// - reusable in UI, Services, Repositories, Controllers
 class CatchingExecutor {
+  final OperationErrorLogger _errorLogger;
+
   final Map<String, CancelableOperation> _activeOperations = {};
+
+  CatchingExecutor({required OperationErrorLogger errorLogger})
+    : _errorLogger = errorLogger;
 
   Map<String, CancelableOperation<void>> get operations => _activeOperations;
 
@@ -73,6 +78,8 @@ class CatchingExecutor {
         exception: error,
         stackTrace: stacktrace,
       );
+
+      _errorLogger.logError(displayableError);
 
       setState(ResultFailure<R>(displayableError));
     }
