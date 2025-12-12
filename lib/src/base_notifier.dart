@@ -26,7 +26,11 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   @mustCallSuper
   @override
   T build() {
-    _catchingExecutor = CatchingExecutor(errorLogger: ref.read(_errorLogger));
+    //TODO
+    _catchingExecutor = CatchingExecutor(
+      errorLogger: ref.read(_errorLogger),
+      type: runtimeType,
+    );
 
     // register cleanup when provider is disposed
     ref.onDispose(() {
@@ -91,5 +95,5 @@ final _errorLogger = Provider<OperationErrorLogger>((ref) {
 
 class _DummyOperationErrorLogger implements OperationErrorLogger {
   @override
-  void logError(DisplayableError error) {}
+  void logError(DisplayableError error, Type runtimeType, String identifier) {}
 }
