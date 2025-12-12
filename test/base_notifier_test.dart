@@ -7,19 +7,15 @@ import 'package:test/test.dart';
 
 void main() {
   test("dispose should cancel all active operations", () async {
-    final testNotifierProvider = NotifierProvider<_BaseTestNotifier, String>(
-      () => _BaseTestNotifier(),
-    );
-
     final container = ProviderContainer();
 
-    final notifier = container.read(testNotifierProvider.notifier);
+    final notifier = container.read(_testNotifierProvider.notifier);
 
     notifier.doAsyncOperation();
 
     expect(notifier.operations.values.single.isCanceled, false);
 
-    container.invalidate(testNotifierProvider);
+    container.invalidate(_testNotifierProvider);
 
     await Future<void>.delayed(Duration.zero);
 
@@ -27,7 +23,9 @@ void main() {
   });
 
   test("runCatching should cancel the previous actions", () async {
-    final notifier = _BaseTestNotifier();
+    final container = ProviderContainer();
+
+    final notifier = container.read(_testNotifierProvider.notifier);
 
     Result<int> actualResult = const ResultInitial();
 
@@ -78,13 +76,16 @@ void main() {
   test(
     "a canceled runCatching should never call setState or onSuccess",
     () async {
-      final notifier = _BaseTestNotifier();
+      final container = ProviderContainer();
 
       Result<int> actualResult = const ResultInitial();
+
+      final notifier = container.read(_testNotifierProvider.notifier);
 
       unawaited(
         notifier.runCatching<int>(
           () async {
+            print("run catching");
             await Future<void>.delayed(const Duration(seconds: 2));
 
             return 1;
@@ -111,6 +112,10 @@ void main() {
     },
   );
 }
+
+final _testNotifierProvider = NotifierProvider<_BaseTestNotifier, String>(
+  () => _BaseTestNotifier(),
+);
 
 class _BaseTestNotifier extends BaseNotifier<String> {
   CancelableOperation<void>? asyncOperation;
