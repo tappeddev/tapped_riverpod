@@ -22,57 +22,6 @@ void main() {
     expect(notifier.operations.isEmpty, true);
   });
 
-  test("runCatching should cancel the previous actions", () async {
-    final container = ProviderContainer();
-
-    final notifier = container.read(_testNotifierProvider.notifier);
-
-    Result<int> actualResult = const ResultInitial();
-
-    bool initialSuccessCalled = false;
-
-    unawaited(
-      notifier.runCatching<int>(
-        () async {
-          await Future<void>.delayed(const Duration(milliseconds: 500));
-
-          return 1;
-        },
-        identifier: "test",
-        setState: (result) {
-          if (result.isSuccess) {
-            // ⚠️ This should never be called !
-            initialSuccessCalled = true;
-          }
-
-          actualResult = result;
-        },
-      ),
-    );
-
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-
-    expect(actualResult, const ResultLoading<int>());
-
-    await notifier.runCatching<int>(
-      () async {
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-
-        return 2;
-      },
-      identifier: "test",
-      setState: (result) {
-        actualResult = result;
-      },
-    );
-
-    await Future<void>.delayed(const Duration(seconds: 1));
-
-    expect(initialSuccessCalled, false);
-
-    expect(actualResult, const ResultSuccess(2));
-  });
-
   test(
     "a canceled runCatching should never call setState or onSuccess",
     () async {

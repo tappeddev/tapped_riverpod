@@ -73,7 +73,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// However, ⚠️ **Riverpod may call [build] (and therefore [init]) multiple times**
   /// during the lifetime of the notifier, for example when:
   /// - a dependency used with [Ref.watch] changes
-  /// - the provider is refreshed or invalidated
+  /// - the provider is refreshed or invalidated -> todo check that...
   ///
   /// Because of this, [init] must be **idempotent** and must not contain
   /// one-time initialization logic.
