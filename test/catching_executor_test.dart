@@ -7,8 +7,10 @@ void main() {
 
     final logger = _CallbackErrorLogger(onLog: (err) => errorLogged = true);
 
-    //TODO
-    final executor = CatchingExecutor(errorLogger: logger, type:);
+    final executor = CatchingExecutor(
+      errorLogger: logger,
+      type: logger.runtimeType,
+    );
 
     await executor.execute<int>(
       identifier: "my-task",
@@ -33,6 +35,4 @@ class _CallbackErrorLogger extends OperationErrorLogger {
   void logError(DisplayableError error, Type runtimeType, String identifier) {
     onLog(error);
   }
-
-
 }
