@@ -6,7 +6,7 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test("dispose should cancel all active operations", () async {
+  test("invalidate/dispose should cancel all active operations", () async {
     final container = ProviderContainer();
 
     final notifier = container.read(_testNotifierProvider.notifier);
@@ -60,6 +60,22 @@ void main() {
       expect(notifier.operations, <String, CancelableOperation<void>>{});
     },
   );
+
+  test("invalidate/dispose should cancel all active operations", () async {
+    final container = ProviderContainer();
+
+    final notifier = container.read(_testNotifierProvider.notifier);
+
+    notifier.doAsyncOperation();
+
+    expect(notifier.operations.values.single.isCanceled, false);
+
+    container.invalidate(_testNotifierProvider);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.operations.isEmpty, true);
+  });
 }
 
 final _testNotifierProvider = NotifierProvider<_BaseTestNotifier, String>(

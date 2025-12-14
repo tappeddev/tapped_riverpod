@@ -9,6 +9,9 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 /// - standardized error handling
 /// - helper for loading/success/failure Result states
 abstract class BaseNotifier<T> extends Notifier<T> {
+
+  //TODO remove me
+  @deprecated
   late final CatchingExecutor _catchingExecutor;
 
   /// Whether this notifier has already been initialized.
@@ -45,8 +48,6 @@ abstract class BaseNotifier<T> extends Notifier<T> {
         errorLogger: ref.read(_errorLogger),
         type: runtimeType,
       );
-
-      onCreate();
     }
 
     _didBuild = true;
@@ -73,7 +74,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// However, ⚠️ **Riverpod may call [build] (and therefore [init]) multiple times**
   /// during the lifetime of the notifier, for example when:
   /// - a dependency used with [Ref.watch] changes
-  /// - the provider is refreshed or invalidated -> todo check that...
+  /// - the provider is refreshed or invalidated
   ///
   /// Because of this, [init] must be **idempotent** and must not contain
   /// one-time initialization logic.
@@ -85,10 +86,6 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// See also the documentation of [Notifier.build].
   @protected
   T init();
-
-  // document me
-  @protected
-  void onCreate() {}
 
   /// Runs the code in [call].
   /// This method returns null if the operation failed.
