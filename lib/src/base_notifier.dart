@@ -3,30 +3,14 @@ import 'dart:async';
 import 'package:async/async.dart' show CancelableOperation;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 /// Base class for custom Notifiers that provides:
 /// - cancelable async operations
 /// - standardized error handling
 /// - helper for loading/success/failure Result states
 abstract class BaseNotifier<T> extends Notifier<T> {
-
-  //TODO remove me
-  @deprecated
-  late final CatchingExecutor _catchingExecutor;
-
-  /// Whether this notifier has already been initialized.
-  ///
-  /// Riverpod may call [build] multiple times during the lifetime when,
-  /// for example when using [Ref.watch]) changes, then [build] will be re-executed.
-  ///
-  /// However, certain setup logic (like creating the [CatchingExecutor] or
-  /// registering one-time resources) must only run once per notifier instance.
-  ///
-  /// [_didBuild] ensures that:
-  /// - [CatchingExecutor] is created exactly once
-  /// - [onCreate] is called exactly once
-  /// - while [init] may still run on every build to create the initial state
-  bool _didBuild = false;
+  // region public
 
   /// The error logger that is used from [CatchingExecutor].
   /// This can be overridden in:
@@ -36,25 +20,18 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   ///   )
   static Provider<OperationErrorLogger> get errorLogger => _errorLogger;
 
-  @visibleForTesting
-  Map<String, CancelableOperation<void>> get operations =>
-      _catchingExecutor.operations;
+  Map<String, CancelableOperation<void>> get operations => _activeOperations;
+
+  // endregion
+
+  final Map<String, CancelableOperation> _activeOperations = {};
 
   @mustCallSuper
   @override
   T build() {
-    if (!_didBuild) {
-      _catchingExecutor = CatchingExecutor(
-        errorLogger: ref.read(_errorLogger),
-        type: runtimeType,
-      );
-    }
-
-    _didBuild = true;
-
     // register cleanup when provider is disposed
     ref.onDispose(() {
-      _catchingExecutor.cancelAllOperations();
+      cancelAllOperations();
 
       onDispose();
     });
@@ -82,7 +59,6 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// It is safe to use [ref.watch] and [ref.listen] here, but be aware that
   /// changes to watched providers will cause [build] and therefor also [init] to re-run.
   ///
-  /// For one-time setup logic, use [onCreate] instead.
   /// See also the documentation of [Notifier.build].
   @protected
   T init();
@@ -97,38 +73,102 @@ abstract class BaseNotifier<T> extends Notifier<T> {
     required void Function(Result<R> result) setState,
     void Function()? onCancel,
   }) async {
-    return _catchingExecutor.execute(
-      identifier: identifier,
-      task: call,
-      setState: (result) {
-        if (!ref.mounted) return;
+    void setStateWhenMounted(Result<R> result) {
+      if (!ref.mounted) return;
 
-        setState(result);
-      },
-      onCancel: onCancel,
-    );
+      setState(result);
+    }
+
+    final errorLogger = ref.read(BaseNotifier.errorLogger);
+
+    // cancel existing operation with same identifier
+    unawaited(_activeOperations[identifier]?.cancel());
+
+    // notify loading
+    setStateWhenMounted(ResultLoading<R>());
+
+    R? result;
+
+    try {
+      final operation = _createOperation<R>(
+        call(),
+        onCancel: onCancel,
+        identifier: identifier,
+      );
+
+      // We have this small extra variable, because if directly do:
+      // result = await call();
+      // and we force-unwrap the result (since call returns a NOT null value)
+      // a null-pointer exception will be thrown in the case that the generic type is "void".
+      // here is a small description: https://medium.com/flutter-community/the-curious-case-of-void-in-dart-f0535705e529
+      final callResult = await operation.value;
+
+      result = callResult;
+
+      setStateWhenMounted(ResultSuccess<R>(callResult));
+    } catch (error, stacktrace) {
+      final displayableError = DisplayableError(
+        exception: error,
+        stackTrace: stacktrace,
+      );
+
+      errorLogger.logError(displayableError, runtimeType, identifier);
+
+      setStateWhenMounted(ResultFailure<R>(displayableError));
+    }
+
+    return result;
   }
 
-  void cancelRunCatchingBy({required String identifier}) {
-    _catchingExecutor.cancelOperationBy(identifier: identifier);
+  /// Cancel and clean up **all** running operations.
+  /// ⚠️ This need to handled by the creator of the instance
+  Future<void> cancelAllOperations() async {
+    final list = List<CancelableOperation>.from(_activeOperations.values);
+
+    _activeOperations.clear();
+
+    for (final op in list) {
+      await op.cancel();
+    }
+  }
+
+  void cancelOperationBy({required String identifier}) {
+    _activeOperations.remove(identifier)?.cancel();
   }
 
   /// Create a [CancelableOperation] that will automatically canceled when [cancelAllOperations] is called.
   /// [O] represents the generic type of the operation.
-  @protected
   CancelableOperation<O> createOperation<O>(
     Future<O> result, {
     FutureOr<void> Function()? onCancel,
     String? overrideIdentifier,
   }) {
-    return _catchingExecutor.createOperation<O>(
-      result,
-      overrideIdentifier: overrideIdentifier,
-      onCancel: onCancel,
-    );
+    final identifier = overrideIdentifier ?? const Uuid().v1();
+
+    return _createOperation(result, identifier: identifier, onCancel: onCancel);
   }
 
   void onDispose() {}
+
+  CancelableOperation<O> _createOperation<O>(
+    Future<O> result, {
+    required String identifier,
+    FutureOr<void> Function()? onCancel,
+  }) {
+    final operation = CancelableOperation<O>.fromFuture(
+      result,
+      onCancel: () => onCancel?.call(),
+    );
+
+    operation.then(
+      (_) => _activeOperations.remove(identifier),
+      onCancel: () => _activeOperations.remove(identifier),
+      onError: (_, _) => _activeOperations.remove(identifier),
+    );
+
+    _activeOperations[identifier] = operation;
+    return operation;
+  }
 }
 
 final _errorLogger = Provider<OperationErrorLogger>((ref) {
