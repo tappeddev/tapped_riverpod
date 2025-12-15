@@ -127,31 +127,63 @@ void main() {
     expect(actualResult, const ResultSuccess(2));
   });
 
-  test("OperationErrorLogger.logError should be called", () async {
-    bool errorLogged = false;
+  test(
+    "OperationErrorLogger.logError should be called when error occur",
+    () async {
+      bool errorLogged = false;
 
-    final container = ProviderContainer(
-      overrides: [
-        BaseNotifier.errorLogger.overrideWithValue(
-          _CallbackErrorLogger(onLog: (err) => errorLogged = true),
-        ),
-      ],
-    );
+      final container = ProviderContainer(
+        overrides: [
+          BaseNotifier.errorLogger.overrideWithValue(
+            _CallbackErrorLogger(onLog: (err) => errorLogged = true),
+          ),
+        ],
+      );
 
-    final notifier = container.read(_testNotifierProvider.notifier);
+      final notifier = container.read(_testNotifierProvider.notifier);
 
-    await notifier.runCatching<int>(
-      () async {
-        await Future.delayed(const Duration(milliseconds: 23));
+      await notifier.runCatching<int>(
+        () async {
+          await Future.delayed(const Duration(milliseconds: 23));
 
-        throw Exception("Expected error");
-      },
-      setState: (result) {},
-      identifier: "my-task",
-    );
+          throw Exception("Expected error");
+        },
+        setState: (result) {},
+        identifier: "my-task",
+      );
 
-    expect(errorLogged, true);
-  });
+      expect(errorLogged, true);
+    },
+  );
+
+  test(
+    "OperationErrorLogger.logError should not be called when no error occur",
+    () async {
+      bool errorLogged = false;
+
+      final container = ProviderContainer(
+        overrides: [
+          BaseNotifier.errorLogger.overrideWithValue(
+            _CallbackErrorLogger(onLog: (err) => errorLogged = true),
+          ),
+        ],
+      );
+
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      await notifier.runCatching<int>(
+        () async {
+          await Future.delayed(const Duration(milliseconds: 23));
+
+          return 0;
+        },
+        setState: (result) {},
+        identifier: "my-task",
+      );
+
+      expect(errorLogged, false);
+    },
+  );
 }
 
 final _testNotifierProvider = NotifierProvider<_BaseTestNotifier, String>(
