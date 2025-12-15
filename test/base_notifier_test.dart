@@ -1,7 +1,6 @@
 import 'dart:async' show Completer, unawaited;
 
 import 'package:async/async.dart' show CancelableOperation;
-import 'package:riverpod/riverpod.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
