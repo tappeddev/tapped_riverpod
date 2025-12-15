@@ -129,12 +129,20 @@ void main() {
   test(
     "OperationErrorLogger.logError should be called when error occur",
     () async {
-      bool errorLogged = false;
+      String? emittedError;
+      Type? notifierType;
+      String? requestId;
 
       final container = ProviderContainer(
         overrides: [
           BaseNotifier.errorLogger.overrideWithValue(
-            _CallbackErrorLogger(onLog: (err) => errorLogged = true),
+            _CallbackErrorLogger(
+              onLog: (err, type, id) {
+                emittedError = err.exception.toString();
+                notifierType = type;
+                requestId = id;
+              },
+            ),
           ),
         ],
       );
@@ -151,19 +159,23 @@ void main() {
         identifier: "my-task",
       );
 
-      expect(errorLogged, true);
+      expect(emittedError, isNotEmpty);
+      expect(notifierType, _BaseTestNotifier().runtimeType);
+      expect(requestId, "my-task");
     },
   );
 
   test(
     "OperationErrorLogger.logError should not be called when no error occur",
     () async {
-      bool errorLogged = false;
+      String? emittedError;
 
       final container = ProviderContainer(
         overrides: [
           BaseNotifier.errorLogger.overrideWithValue(
-            _CallbackErrorLogger(onLog: (err) => errorLogged = true),
+            _CallbackErrorLogger(
+              onLog: (err, _, _) => emittedError = err.exception.toString(),
+            ),
           ),
         ],
       );
@@ -180,7 +192,7 @@ void main() {
         identifier: "my-task",
       );
 
-      expect(errorLogged, false);
+      expect(emittedError, isNull);
     },
   );
 }
@@ -201,12 +213,17 @@ class _BaseTestNotifier extends BaseNotifier<String> {
 }
 
 class _CallbackErrorLogger extends OperationErrorLogger {
-  final void Function(DisplayableError error) onLog;
+  final void Function(
+    DisplayableError error,
+    Type runtimeType,
+    String identifier,
+  )
+  onLog;
 
   _CallbackErrorLogger({required this.onLog});
 
   @override
   void logError(DisplayableError error, Type runtimeType, String identifier) {
-    onLog(error);
+    onLog(error, runtimeType, identifier);
   }
 }
