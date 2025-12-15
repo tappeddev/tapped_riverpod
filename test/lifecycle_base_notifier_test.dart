@@ -35,6 +35,19 @@ void main() {
     container.read(_testNotifierProvider.notifier);
 
     expect(lifeCycle, ["build", "init", "onDispose", "build", "init"]);
+
+    container.refresh(_testNotifierProvider);
+
+    expect(lifeCycle, [
+      "build",
+      "init",
+      "onDispose",
+      "build",
+      "init",
+      'onDispose',
+      'build',
+      'init',
+    ]);
   });
 }
 
