@@ -196,5 +196,5 @@ final _errorLogger = Provider<OperationErrorLogger>((ref) {
 
 class _DummyOperationErrorLogger implements OperationErrorLogger {
   @override
-  void logError(DisplayableError error, Type runtimeType, String identifier) {}
+  void logError(DisplayableError error, Type providerType, String identifier) {}
 }

@@ -215,7 +215,7 @@ class _BaseTestNotifier extends BaseNotifier<String> {
 class _CallbackErrorLogger extends OperationErrorLogger {
   final void Function(
     DisplayableError error,
-    Type runtimeType,
+    Type providerType,
     String identifier,
   )
   onLog;
@@ -223,7 +223,7 @@ class _CallbackErrorLogger extends OperationErrorLogger {
   _CallbackErrorLogger({required this.onLog});
 
   @override
-  void logError(DisplayableError error, Type runtimeType, String identifier) {
-    onLog(error, runtimeType, identifier);
+  void logError(DisplayableError error, Type providerType, String identifier) {
+    onLog(error, providerType, identifier);
   }
 }
