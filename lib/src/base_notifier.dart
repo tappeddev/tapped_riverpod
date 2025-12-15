@@ -5,10 +5,30 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-/// Base class for custom Notifiers that provides:
-/// - cancelable async operations
-/// - standardized error handling
-/// - helper for loading/success/failure Result states
+/// Base class for custom Riverpod [Notifier]s with built-in support for
+/// cancelable async operations, standardized error handling and
+/// convenient helpers for loading/success/failure result states.
+///
+/// ## What this class provides
+/// - Management of **cancelable async operations** via [CancelableOperation]
+/// - A unified `runCatching` helper for:
+///   - loading / success / failure state transitions
+///   - automatic cancellation of previous runs
+///   - centralized error logging
+/// - Automatic cleanup of all running operations when the provider is disposed
+///
+///
+/// ** 🚨🚨🚨 **
+/// Even though [onDispose] is called when the provider is invalidated,
+/// the *Notifier instance itself is reused* by Riverpod.
+/// This means:
+///
+/// - Member variables **are not reset automatically**
+/// - Any state stored in fields will persist across rebuilds
+///
+/// 👉 **Avoid keeping mutable state in member variables.**
+/// If you must store state in fields, ensure it is fully cleaned up in
+/// [onDispose].
 abstract class BaseNotifier<T> extends Notifier<T> {
   // region public
 
