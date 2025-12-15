@@ -32,7 +32,6 @@ import 'package:uuid/uuid.dart';
 abstract class BaseNotifier<T> extends Notifier<T> {
   // region public
 
-  /// The error logger that is used from [CatchingExecutor].
   /// This can be overridden in:
   ///   ProviderScope(
   ///     overrides: BaseNotifier.errorLogger.overrideWithValue(myNewLogger),
