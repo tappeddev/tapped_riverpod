@@ -27,15 +27,19 @@ sealed class Result<T> with _$Result<T> {
   bool get isDone => isSuccess || isFailure;
 
   ResultFailure<T>? asFailureOrNull() {
-    if (isFailure) {
-      return this as ResultFailure<T>;
+    final result = this;
+
+    if (result is ResultFailure<T>) {
+      return result;
     }
     return null;
   }
 
   ResultSuccess<T>? asSuccessOrNull() {
-    if (isSuccess) {
-      return this as ResultSuccess<T>;
+    final result = this;
+
+    if (result is ResultSuccess<T>) {
+      return result;
     }
     return null;
   }

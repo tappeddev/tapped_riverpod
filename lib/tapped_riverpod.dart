@@ -5,7 +5,7 @@ export 'src/error/displayble_error.dart';
 export 'src/base_notifier.dart';
 export 'src/result_filter_not_null_notifier.dart';
 export 'src/result.dart';
-export 'src/catching_executor.dart';
+export 'src/operation_error_logger.dart';
 
 // endregion
 

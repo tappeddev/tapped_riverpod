@@ -1,12 +1,65 @@
 import 'dart:async' show Completer, unawaited;
 
 import 'package:async/async.dart' show CancelableOperation;
-import 'package:riverpod/riverpod.dart';
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test("dispose should cancel all active operations", () async {
+  test("invalidate/dispose should cancel all active operations", () async {
+    final container = ProviderContainer();
+
+    final notifier = container.read(_testNotifierProvider.notifier);
+
+    notifier.doAsyncOperation();
+
+    expect(notifier.operations.values.single.isCanceled, false);
+
+    container.invalidate(_testNotifierProvider);
+
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.operations.isEmpty, true);
+  });
+
+  test(
+    "a canceled runCatching should never call setState or onSuccess",
+    () async {
+      final container = ProviderContainer();
+
+      Result<int> actualResult = const ResultInitial();
+
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            return 1;
+          },
+          identifier: "test",
+          setState: (result) {
+            if (result.isSuccess) {
+              throw Exception("Should not be called ");
+            }
+
+            actualResult = result;
+          },
+        ),
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      notifier.cancelOperationBy(identifier: "test");
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(actualResult, const ResultLoading<int>());
+      expect(notifier.operations, <String, CancelableOperation<void>>{});
+    },
+  );
+
+  test("invalidate/dispose should cancel all active operations", () async {
     final container = ProviderContainer();
 
     final notifier = container.read(_testNotifierProvider.notifier);
@@ -74,41 +127,72 @@ void main() {
   });
 
   test(
-    "a canceled runCatching should never call setState or onSuccess",
+    "OperationErrorLogger.logError should be called when error occur",
     () async {
-      final container = ProviderContainer();
+      String? emittedError;
+      Type? notifierType;
+      String? requestId;
 
-      Result<int> actualResult = const ResultInitial();
+      final container = ProviderContainer(
+        overrides: [
+          BaseNotifier.errorLogger.overrideWithValue(
+            _CallbackErrorLogger(
+              onLog: (err, type, id) {
+                emittedError = err.exception.toString();
+                notifierType = type;
+                requestId = id;
+              },
+            ),
+          ),
+        ],
+      );
 
       final notifier = container.read(_testNotifierProvider.notifier);
 
-      unawaited(
-        notifier.runCatching<int>(
-          () async {
-            print("run catching");
-            await Future<void>.delayed(const Duration(seconds: 2));
+      await notifier.runCatching<int>(
+        () async {
+          await Future.delayed(const Duration(milliseconds: 23));
 
-            return 1;
-          },
-          identifier: "test",
-          setState: (result) {
-            if (result.isSuccess) {
-              throw Exception("Should not be called ");
-            }
-
-            actualResult = result;
-          },
-        ),
+          throw Exception("Expected error");
+        },
+        setState: (result) {},
+        identifier: "my-task",
       );
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(emittedError, isNotEmpty);
+      expect(notifierType, _BaseTestNotifier().runtimeType);
+      expect(requestId, "my-task");
+    },
+  );
 
-      notifier.cancelRunCatchingBy(identifier: "test");
+  test(
+    "OperationErrorLogger.logError should not be called when no error occur",
+    () async {
+      String? emittedError;
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final container = ProviderContainer(
+        overrides: [
+          BaseNotifier.errorLogger.overrideWithValue(
+            _CallbackErrorLogger(
+              onLog: (err, _, _) => emittedError = err.exception.toString(),
+            ),
+          ),
+        ],
+      );
 
-      expect(actualResult, const ResultLoading<int>());
-      expect(notifier.operations, <String, CancelableOperation<void>>{});
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      await notifier.runCatching<int>(
+        () async {
+          await Future.delayed(const Duration(milliseconds: 23));
+
+          return 0;
+        },
+        setState: (result) {},
+        identifier: "my-task",
+      );
+
+      expect(emittedError, isNull);
     },
   );
 }
@@ -125,5 +209,21 @@ class _BaseTestNotifier extends BaseNotifier<String> {
 
   void doAsyncOperation() {
     asyncOperation = createOperation(Completer<void>().future);
+  }
+}
+
+class _CallbackErrorLogger extends OperationErrorLogger {
+  final void Function(
+    DisplayableError error,
+    Type providerType,
+    String identifier,
+  )
+  onLog;
+
+  _CallbackErrorLogger({required this.onLog});
+
+  @override
+  void logError(DisplayableError error, Type providerType, String identifier) {
+    onLog(error, providerType, identifier);
   }
 }
