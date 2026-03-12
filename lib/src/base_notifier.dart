@@ -181,7 +181,13 @@ abstract class BaseNotifier<T> extends Notifier<T> {
 
     operation.then(
       (_) => _activeOperations.remove(identifier),
-      onCancel: () => _activeOperations.remove(identifier),
+      onCancel: () {
+        _activeOperations.remove(identifier);
+
+        ref
+            .read(BaseNotifier.logger)
+            .logOperationCanceled(runtimeType, identifier);
+      },
       onError: (_, _) => _activeOperations.remove(identifier),
     );
 
@@ -197,4 +203,7 @@ final _logger = Provider<OperationLogger>((ref) {
 class _DummyOperationLogger implements OperationLogger {
   @override
   void logError(DisplayableError error, Type providerType, String identifier) {}
+
+  @override
+  void logOperationCanceled(Type providerType, String identifier) {}
 }

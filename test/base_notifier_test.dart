@@ -127,6 +127,54 @@ void main() {
   });
 
   test(
+    "when the same action is called twice, the second call's Future completes with the second result",
+    () async {
+      final container = ProviderContainer();
+
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      final identifier = "test";
+
+      bool secondActionStarted = false;
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            return 1;
+          },
+          identifier: identifier,
+          setState: (result) {
+            expect(
+              secondActionStarted,
+              false,
+              reason:
+                  "After second action started, this should not be called, because the first action is not completed",
+            );
+          },
+        ),
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final secondResult = await notifier.runCatching<int>(
+        () async {
+          secondActionStarted = true;
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return 2;
+        },
+        identifier: identifier,
+        setState: (_) {},
+      );
+
+      await Future<void>.delayed(const Duration(seconds: 5));
+
+      expect(secondResult, 2);
+    },
+  );
+
+  test(
     "OperationErrorLogger.logError should be called when error occur",
     () async {
       String? emittedError;
@@ -137,7 +185,7 @@ void main() {
         overrides: [
           BaseNotifier.logger.overrideWithValue(
             _CallbackOperationLogger(
-              onLog: (err, type, id) {
+              onLogError: (err, type, id) {
                 emittedError = err.exception.toString();
                 notifierType = type;
                 requestId = id;
@@ -174,7 +222,8 @@ void main() {
         overrides: [
           BaseNotifier.logger.overrideWithValue(
             _CallbackOperationLogger(
-              onLog: (err, _, _) => emittedError = err.exception.toString(),
+              onLogError: (err, _, _) =>
+                  emittedError = err.exception.toString(),
             ),
           ),
         ],
@@ -217,13 +266,21 @@ class _CallbackOperationLogger extends OperationLogger {
     DisplayableError error,
     Type providerType,
     String identifier,
-  )
-  onLog;
+  )?
+  onLogError;
 
-  _CallbackOperationLogger({required this.onLog});
+  final void Function(Type providerType, String identifier)?
+  onLogOperationCanceled;
+
+  _CallbackOperationLogger({this.onLogError, this.onLogOperationCanceled});
 
   @override
   void logError(DisplayableError error, Type providerType, String identifier) {
-    onLog(error, providerType, identifier);
+    onLogError?.call(error, providerType, identifier);
+  }
+
+  @override
+  void logOperationCanceled(Type providerType, String identifier) {
+    onLogOperationCanceled?.call(providerType, identifier);
   }
 }

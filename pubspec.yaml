@@ -17,6 +17,10 @@ dev_dependencies:
   json_serializable: ^6.11.1
   freezed: ^3.2.3
   flutter_lints: ^6.0.0
+  tapped_lints:
+    git:
+      url: https://github.com/tappeddev/tapped_lints.git
+      ref: master
   test: ^1.26.3
 
 
