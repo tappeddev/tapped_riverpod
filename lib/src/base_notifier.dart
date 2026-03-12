@@ -34,10 +34,10 @@ abstract class BaseNotifier<T> extends Notifier<T> {
 
   /// This can be overridden in:
   ///   ProviderScope(
-  ///     overrides: BaseNotifier.errorLogger.overrideWithValue(myNewLogger),
+  ///     overrides: BaseNotifier.logger.overrideWithValue(myNewLogger),
   ///     ...
   ///   )
-  static Provider<OperationErrorLogger> get errorLogger => _errorLogger;
+  static Provider<OperationLogger> get logger => _logger;
 
   Map<String, CancelableOperation<void>> get operations => _activeOperations;
 
@@ -98,7 +98,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
       setState(result);
     }
 
-    final errorLogger = ref.read(BaseNotifier.errorLogger);
+    final errorLogger = ref.read(BaseNotifier.logger);
 
     // cancel existing operation with same identifier
     unawaited(_activeOperations[identifier]?.cancel());
@@ -190,11 +190,11 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   }
 }
 
-final _errorLogger = Provider<OperationErrorLogger>((ref) {
-  return _DummyOperationErrorLogger();
+final _logger = Provider<OperationLogger>((ref) {
+  return _DummyOperationLogger();
 });
 
-class _DummyOperationErrorLogger implements OperationErrorLogger {
+class _DummyOperationLogger implements OperationLogger {
   @override
   void logError(DisplayableError error, Type providerType, String identifier) {}
 }

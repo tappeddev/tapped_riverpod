@@ -135,8 +135,8 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          BaseNotifier.errorLogger.overrideWithValue(
-            _CallbackErrorLogger(
+          BaseNotifier.logger.overrideWithValue(
+            _CallbackOperationLogger(
               onLog: (err, type, id) {
                 emittedError = err.exception.toString();
                 notifierType = type;
@@ -172,8 +172,8 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          BaseNotifier.errorLogger.overrideWithValue(
-            _CallbackErrorLogger(
+          BaseNotifier.logger.overrideWithValue(
+            _CallbackOperationLogger(
               onLog: (err, _, _) => emittedError = err.exception.toString(),
             ),
           ),
@@ -212,7 +212,7 @@ class _BaseTestNotifier extends BaseNotifier<String> {
   }
 }
 
-class _CallbackErrorLogger extends OperationErrorLogger {
+class _CallbackOperationLogger extends OperationLogger {
   final void Function(
     DisplayableError error,
     Type providerType,
@@ -220,7 +220,7 @@ class _CallbackErrorLogger extends OperationErrorLogger {
   )
   onLog;
 
-  _CallbackErrorLogger({required this.onLog});
+  _CallbackOperationLogger({required this.onLog});
 
   @override
   void logError(DisplayableError error, Type providerType, String identifier) {
