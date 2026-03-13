@@ -5,24 +5,24 @@ void main() {
   group('ResultFilterNotNullNotifier', () {
     _test(
       testName: "initial value should be correct",
-      initialState: ResultSuccess("Initial-Data"),
+      initialState: const ResultSuccess("Initial-Data"),
       fireUpdated: (_) {},
       expectedOutputs: ["Initial-Data"],
     );
 
     _test(
       testName: "initial value should be null if there nothing else specified",
-      initialState: ResultInitial(),
+      initialState: const ResultInitial(),
       fireUpdated: (_) {},
       expectedOutputs: [null],
     );
 
     _test(
       testName: "should not change state when filterMap returns null",
-      initialState: ResultSuccess("Initial-Data"),
+      initialState: const ResultSuccess("Initial-Data"),
       fireUpdated: (prov) {
         prov
-          ..setResult(Result.loading())
+          ..setResult(const Result.loading())
           ..setResult(
             Result.failure(
               DisplayableError(
@@ -37,34 +37,36 @@ void main() {
 
     _test(
       testName: "should not change state when same value is reported again",
-      initialState: ResultSuccess("Data"),
+      initialState: const ResultSuccess("Data"),
       fireUpdated: (prov) {
         prov
-          ..setResult(Result.success("Data"))
-          ..setResult(Result.success("Data"));
+          ..setResult(const Result.success("Data"))
+          ..setResult(const Result.success("Data"));
       },
       expectedOutputs: ["Data"],
     );
 
     _test(
       testName: "should emit changes",
-      initialState: ResultSuccess("Initial-Data"),
+      initialState: const ResultSuccess("Initial-Data"),
       fireUpdated: (provider) {
         provider
-          ..setResult(Result.loading())
-          ..setResult(Result.success("Data-2"))
-          ..setResult(Result.loading())
-          ..setResult(Result.success("Data-3"))
-          ..setResult(Result.success("Data-3"))
-          ..setResult(Result.loading())
-          ..setResult(Result.success("Data-4"));
+          ..setResult(const Result.loading())
+          ..setResult(const Result.success("Data-2"))
+          ..setResult(const Result.loading())
+          ..setResult(const Result.success("Data-3"))
+          ..setResult(const Result.success("Data-3"))
+          ..setResult(const Result.loading())
+          ..setResult(const Result.success("Data-4"));
       },
       expectedOutputs: ["Initial-Data", "Data-2", "Data-3", "Data-4"],
     );
   });
 
   test("Map data with different generic types", () {
-    final inner = NotifierProvider(() => _TestBaseNotifier(ResultInitial()));
+    final inner = NotifierProvider(
+      () => _TestBaseNotifier(const ResultInitial()),
+    );
 
     final provider = NotifierProvider(
       () => ResultFilterNotNullNotifier<String, bool>(
@@ -86,7 +88,7 @@ void main() {
       fireImmediately: true,
     );
 
-    container.read(inner.notifier).setResult(ResultLoading());
+    container.read(inner.notifier).setResult(const ResultLoading());
     container
         .read(inner.notifier)
         .setResult(
@@ -98,7 +100,7 @@ void main() {
           ),
         );
 
-    container.read(inner.notifier).setResult(ResultSuccess("Logged in"));
+    container.read(inner.notifier).setResult(const ResultSuccess("Logged in"));
 
     expect(events, [false, true]);
   });

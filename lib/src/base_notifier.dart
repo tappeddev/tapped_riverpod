@@ -34,16 +34,16 @@ abstract class BaseNotifier<T> extends Notifier<T> {
 
   /// This can be overridden in:
   ///   ProviderScope(
-  ///     overrides: BaseNotifier.errorLogger.overrideWithValue(myNewLogger),
+  ///     overrides: BaseNotifier.logger.overrideWithValue(myNewLogger),
   ///     ...
   ///   )
-  static Provider<OperationErrorLogger> get errorLogger => _errorLogger;
+  static Provider<OperationLogger> get logger => _logger;
 
   Map<String, CancelableOperation<void>> get operations => _activeOperations;
 
   // endregion
 
-  final Map<String, CancelableOperation> _activeOperations = {};
+  final Map<String, CancelableOperation<void>> _activeOperations = {};
 
   @mustCallSuper
   @override
@@ -98,7 +98,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
       setState(result);
     }
 
-    final errorLogger = ref.read(BaseNotifier.errorLogger);
+    final logger = ref.read(BaseNotifier.logger);
 
     // cancel existing operation with same identifier
     unawaited(_activeOperations[identifier]?.cancel());
@@ -131,7 +131,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
         stackTrace: stacktrace,
       );
 
-      errorLogger.logError(displayableError, runtimeType, identifier);
+      logger.logError(displayableError, runtimeType, identifier);
 
       setStateWhenMounted(ResultFailure<R>(displayableError));
     }
@@ -142,7 +142,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// Cancel and clean up **all** running operations.
   /// ⚠️ This need to handled by the creator of the instance
   Future<void> cancelAllOperations() async {
-    final list = List<CancelableOperation>.from(_activeOperations.values);
+    final list = List<CancelableOperation<void>>.from(_activeOperations.values);
 
     _activeOperations.clear();
 
@@ -174,6 +174,8 @@ abstract class BaseNotifier<T> extends Notifier<T> {
     required String identifier,
     FutureOr<void> Function()? onCancel,
   }) {
+    final logger = ref.read(BaseNotifier.logger);
+
     final operation = CancelableOperation<O>.fromFuture(
       result,
       onCancel: () => onCancel?.call(),
@@ -181,7 +183,11 @@ abstract class BaseNotifier<T> extends Notifier<T> {
 
     operation.then(
       (_) => _activeOperations.remove(identifier),
-      onCancel: () => _activeOperations.remove(identifier),
+      onCancel: () {
+        _activeOperations.remove(identifier);
+
+        logger.logOperationCanceled(runtimeType, identifier);
+      },
       onError: (_, _) => _activeOperations.remove(identifier),
     );
 
@@ -190,11 +196,14 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   }
 }
 
-final _errorLogger = Provider<OperationErrorLogger>((ref) {
-  return _DummyOperationErrorLogger();
+final _logger = Provider<OperationLogger>((ref) {
+  return _DummyOperationLogger();
 });
 
-class _DummyOperationErrorLogger implements OperationErrorLogger {
+class _DummyOperationLogger implements OperationLogger {
   @override
   void logError(DisplayableError error, Type providerType, String identifier) {}
+
+  @override
+  void logOperationCanceled(Type providerType, String identifier) {}
 }

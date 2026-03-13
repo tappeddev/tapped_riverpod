@@ -127,6 +127,124 @@ void main() {
   });
 
   test(
+    "when the same action is called twice, the second call's Future completes with the second result",
+    () async {
+      final container = ProviderContainer();
+
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      final identifier = "test";
+
+      bool secondActionStarted = false;
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            fail('Cancelled operation should not run to completion');
+          },
+          identifier: identifier,
+          setState: (result) {
+            expect(
+              secondActionStarted,
+              false,
+              reason:
+                  "After second action started, this should not be called, because the first action is not completed",
+            );
+          },
+        ),
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final secondResult = await notifier.runCatching<int>(
+        () async {
+          secondActionStarted = true;
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return 2;
+        },
+        identifier: identifier,
+        setState: (_) {},
+      );
+
+      await Future<void>.delayed(const Duration(seconds: 5));
+
+      expect(secondResult, 2);
+    },
+  );
+
+  test(
+    "OperationErrorLogger.logOperationCanceled should be called when action is cancelled or overridden",
+    () async {
+      int operationCanceledCounter = 0;
+
+      final container = ProviderContainer(
+        overrides: [
+          BaseNotifier.logger.overrideWithValue(
+            _CallbackOperationLogger(
+              onLogOperationCanceled: (type, id) {
+                expect(
+                  type,
+                  _BaseTestNotifier,
+                  reason: "The type should be correct",
+                );
+
+                expect(id, "test", reason: "The id should be correct");
+
+                operationCanceledCounter++;
+              },
+            ),
+          ),
+        ],
+      );
+
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            fail('Cancelled operation should not run to completion');
+          },
+          identifier: "test",
+          setState: (result) {},
+        ),
+      );
+
+      notifier.cancelOperationBy(identifier: "test");
+
+      expect(operationCanceledCounter, 1);
+
+      await Future<void>.delayed(Duration.zero);
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            fail('Superseded operation should not run to completion');
+          },
+          identifier: "test",
+          setState: (result) {},
+        ),
+      );
+
+      await notifier.runCatching<int>(
+        () async {
+          await Future<void>.delayed(const Duration(milliseconds: 300));
+          return 2;
+        },
+        identifier: "test",
+        setState: (result) {},
+      );
+
+      expect(operationCanceledCounter, 2);
+    },
+  );
+
+  test(
     "OperationErrorLogger.logError should be called when error occur",
     () async {
       String? emittedError;
@@ -135,9 +253,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          BaseNotifier.errorLogger.overrideWithValue(
-            _CallbackErrorLogger(
-              onLog: (err, type, id) {
+          BaseNotifier.logger.overrideWithValue(
+            _CallbackOperationLogger(
+              onLogError: (err, type, id) {
                 emittedError = err.exception.toString();
                 notifierType = type;
                 requestId = id;
@@ -151,7 +269,7 @@ void main() {
 
       await notifier.runCatching<int>(
         () async {
-          await Future.delayed(const Duration(milliseconds: 23));
+          await Future<void>.delayed(const Duration(milliseconds: 23));
 
           throw Exception("Expected error");
         },
@@ -172,9 +290,10 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          BaseNotifier.errorLogger.overrideWithValue(
-            _CallbackErrorLogger(
-              onLog: (err, _, _) => emittedError = err.exception.toString(),
+          BaseNotifier.logger.overrideWithValue(
+            _CallbackOperationLogger(
+              onLogError: (err, _, _) =>
+                  emittedError = err.exception.toString(),
             ),
           ),
         ],
@@ -184,7 +303,7 @@ void main() {
 
       await notifier.runCatching<int>(
         () async {
-          await Future.delayed(const Duration(milliseconds: 23));
+          await Future<void>.delayed(const Duration(milliseconds: 23));
 
           return 0;
         },
@@ -212,18 +331,26 @@ class _BaseTestNotifier extends BaseNotifier<String> {
   }
 }
 
-class _CallbackErrorLogger extends OperationErrorLogger {
+class _CallbackOperationLogger extends OperationLogger {
   final void Function(
     DisplayableError error,
     Type providerType,
     String identifier,
-  )
-  onLog;
+  )?
+  onLogError;
 
-  _CallbackErrorLogger({required this.onLog});
+  final void Function(Type providerType, String identifier)?
+  onLogOperationCanceled;
+
+  _CallbackOperationLogger({this.onLogError, this.onLogOperationCanceled});
 
   @override
   void logError(DisplayableError error, Type providerType, String identifier) {
-    onLog(error, providerType, identifier);
+    onLogError?.call(error, providerType, identifier);
+  }
+
+  @override
+  void logOperationCanceled(Type providerType, String identifier) {
+    onLogOperationCanceled?.call(providerType, identifier);
   }
 }
