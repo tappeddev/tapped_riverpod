@@ -43,7 +43,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
 
   // endregion
 
-  final Map<String, CancelableOperation> _activeOperations = {};
+  final Map<String, CancelableOperation<void>> _activeOperations = {};
 
   @mustCallSuper
   @override
@@ -98,7 +98,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
       setState(result);
     }
 
-    final errorLogger = ref.read(BaseNotifier.logger);
+    final logger = ref.read(BaseNotifier.logger);
 
     // cancel existing operation with same identifier
     unawaited(_activeOperations[identifier]?.cancel());
@@ -131,7 +131,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
         stackTrace: stacktrace,
       );
 
-      errorLogger.logError(displayableError, runtimeType, identifier);
+      logger.logError(displayableError, runtimeType, identifier);
 
       setStateWhenMounted(ResultFailure<R>(displayableError));
     }
@@ -142,7 +142,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// Cancel and clean up **all** running operations.
   /// ⚠️ This need to handled by the creator of the instance
   Future<void> cancelAllOperations() async {
-    final list = List<CancelableOperation>.from(_activeOperations.values);
+    final list = List<CancelableOperation<void>>.from(_activeOperations.values);
 
     _activeOperations.clear();
 
@@ -174,6 +174,8 @@ abstract class BaseNotifier<T> extends Notifier<T> {
     required String identifier,
     FutureOr<void> Function()? onCancel,
   }) {
+    final logger = ref.read(BaseNotifier.logger);
+
     final operation = CancelableOperation<O>.fromFuture(
       result,
       onCancel: () => onCancel?.call(),
@@ -184,9 +186,7 @@ abstract class BaseNotifier<T> extends Notifier<T> {
       onCancel: () {
         _activeOperations.remove(identifier);
 
-        ref
-            .read(BaseNotifier.logger)
-            .logOperationCanceled(runtimeType, identifier);
+        logger.logOperationCanceled(runtimeType, identifier);
       },
       onError: (_, _) => _activeOperations.remove(identifier),
     );

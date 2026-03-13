@@ -175,6 +175,76 @@ void main() {
   );
 
   test(
+    "OperationErrorLogger.logOperationCanceled should be called when action is cancelled or overridden",
+    () async {
+      int operationCanceledCounter = 0;
+
+      final container = ProviderContainer(
+        overrides: [
+          BaseNotifier.logger.overrideWithValue(
+            _CallbackOperationLogger(
+              onLogOperationCanceled: (type, id) {
+                expect(
+                  type,
+                  _BaseTestNotifier,
+                  reason: "The type should be correct",
+                );
+
+                expect(id, "test", reason: "The id should be correct");
+
+                operationCanceledCounter++;
+              },
+            ),
+          ),
+        ],
+      );
+
+      final notifier = container.read(_testNotifierProvider.notifier);
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            fail('Cancelled operation should not run to completion');
+          },
+          identifier: "test",
+          setState: (result) {},
+        ),
+      );
+
+      notifier.cancelOperationBy(identifier: "test");
+
+      expect(operationCanceledCounter, 1);
+
+      await Future<void>.delayed(Duration.zero);
+
+      unawaited(
+        notifier.runCatching<int>(
+          () async {
+            await Future<void>.delayed(const Duration(seconds: 2));
+
+            fail('Superseded operation should not run to completion');
+          },
+          identifier: "test",
+          setState: (result) {},
+        ),
+      );
+
+      await notifier.runCatching<int>(
+        () async {
+          await Future<void>.delayed(const Duration(milliseconds: 300));
+          return 2;
+        },
+        identifier: "test",
+        setState: (result) {},
+      );
+
+      expect(operationCanceledCounter, 2);
+    },
+  );
+
+  test(
     "OperationErrorLogger.logError should be called when error occur",
     () async {
       String? emittedError;
@@ -199,7 +269,7 @@ void main() {
 
       await notifier.runCatching<int>(
         () async {
-          await Future.delayed(const Duration(milliseconds: 23));
+          await Future<void>.delayed(const Duration(milliseconds: 23));
 
           throw Exception("Expected error");
         },
@@ -233,7 +303,7 @@ void main() {
 
       await notifier.runCatching<int>(
         () async {
-          await Future.delayed(const Duration(milliseconds: 23));
+          await Future<void>.delayed(const Duration(milliseconds: 23));
 
           return 0;
         },

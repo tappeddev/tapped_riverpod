@@ -9,7 +9,7 @@ void main() {
   test("the lifecycle of the provider should be correct", () async {
     final container = ProviderContainer();
 
-    expect(lifeCycle, []);
+    expect(lifeCycle, <String>[]);
 
     final notifier = container.read(_testNotifierProvider.notifier);
 
