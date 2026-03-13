@@ -142,7 +142,7 @@ void main() {
           () async {
             await Future<void>.delayed(const Duration(seconds: 2));
 
-            return 1;
+            fail('Cancelled operation should not run to completion');
           },
           identifier: identifier,
           setState: (result) {
