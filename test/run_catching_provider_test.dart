@@ -4,9 +4,7 @@ import 'package:test/test.dart';
 NotifierProvider<RunCatchingNotifier<T>, Result<T>> _provider<T>(
   Future<T> Function(Ref ref) fetch,
 ) {
-  return NotifierProvider(
-    () => RunCatchingNotifier(fetch: fetch),
-  );
+  return NotifierProvider(() => RunCatchingNotifier(fetch: fetch));
 }
 
 void main() {
@@ -33,7 +31,11 @@ void main() {
     final notifier = container.read(provider.notifier);
     final states = <Result<int>>[];
 
-    container.listen(provider, (_, next) => states.add(next), fireImmediately: true);
+    container.listen(
+      provider,
+      (_, next) => states.add(next),
+      fireImmediately: true,
+    );
 
     await notifier.load();
 
