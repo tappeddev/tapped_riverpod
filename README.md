@@ -17,8 +17,61 @@ clear pattern for loading and result states.
 
 - ✅ Manage async tasks with `CancelableOperation`
 - ✅ Run cancellable operations with `runCatching`
+- ✅ Declarative async providers with `CallbackResultNotifier`
 - ✅ Cancel operations by identifier
 - ✅ Auto-cleanup when the provider is disposed
+
+---
+
+## `CallbackResultNotifier`
+
+Use `CallbackResultNotifier` for simple async fetches with `Result<T>`, without writing a custom notifier class.
+
+The fetch does **not** run automatically — you decide when to call `.load()` (e.g. on screen init or button press).
+
+```dart
+final provRemoteConfigLoader =
+    NotifierProvider<CallbackResultNotifier<RemoteConfig>, Result<RemoteConfig>>(
+  () => CallbackResultNotifier(
+    fetch: (ref) => ref.read(provRemoteConfigService).getConfiguration(),
+  ),
+);
+
+class RemoteConfigScreen extends ConsumerStatefulWidget {
+  const RemoteConfigScreen({super.key});
+
+  @override
+  ConsumerState<RemoteConfigScreen> createState() => _RemoteConfigScreenState();
+}
+
+class _RemoteConfigScreenState extends ConsumerState<RemoteConfigScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ref.read(provRemoteConfigLoader.notifier).load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = ref.watch(provRemoteConfigLoader);
+
+    return result.when(
+      initial: (_) => const SizedBox.shrink(),
+      loading: (_) => const CircularProgressIndicator(),
+      success: (config) => Text(config.someValue),
+      failure: (error, _) => Text(error.toMessage(context)),
+    );
+  }
+}
+```
+
+Reload:
+
+```dart
+ref.read(provRemoteConfigLoader.notifier).load();
+```
+
+Compared to a manual `BaseNotifier`, you do not need to create a class yourself.
 
 ---
 

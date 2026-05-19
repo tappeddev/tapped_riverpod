@@ -3,6 +3,7 @@ export 'src/error/displayble_error.dart';
 // region wrapper
 
 export 'src/base_notifier.dart';
+export 'src/callback_result_notifier.dart';
 export 'src/result_filter_not_null_notifier.dart';
 export 'src/result.dart';
 export 'src/operation_logger.dart';
