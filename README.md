@@ -17,22 +17,22 @@ clear pattern for loading and result states.
 
 - ✅ Manage async tasks with `CancelableOperation`
 - ✅ Run cancellable operations with `runCatching`
-- ✅ Declarative async providers with `RunCatchingNotifier`
+- ✅ Declarative async providers with `CallbackResultNotifier`
 - ✅ Cancel operations by identifier
 - ✅ Auto-cleanup when the provider is disposed
 
 ---
 
-## `RunCatchingNotifier`
+## `CallbackResultNotifier`
 
-Use `RunCatchingNotifier` for simple async fetches with `Result<T>`, without writing a custom notifier class.
+Use `CallbackResultNotifier` for simple async fetches with `Result<T>`, without writing a custom notifier class.
 
 The fetch does **not** run automatically — you decide when to call `.load()` (e.g. on screen init or button press).
 
 ```dart
 final provRemoteConfigLoader =
-    NotifierProvider<RunCatchingNotifier<RemoteConfig>, Result<RemoteConfig>>(
-  () => RunCatchingNotifier(
+    NotifierProvider<CallbackResultNotifier<RemoteConfig>, Result<RemoteConfig>>(
+  () => CallbackResultNotifier(
     fetch: (ref) => ref.read(provRemoteConfigService).getConfiguration(),
   ),
 );

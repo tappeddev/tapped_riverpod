@@ -8,8 +8,8 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 /// Example:
 /// ```dart
 /// final provRemoteConfigLoader =
-///     NotifierProvider<RunCatchingNotifier<RemoteConfig>, Result<RemoteConfig>>(
-///   () => RunCatchingNotifier(
+///     NotifierProvider<CallbackResultNotifier<RemoteConfig>, Result<RemoteConfig>>(
+///   () => CallbackResultNotifier(
 ///     fetch: (ref) => ref.read(provRemoteConfigService).getConfiguration(),
 ///   ),
 /// );
@@ -17,8 +17,8 @@ import 'package:tapped_riverpod/tapped_riverpod.dart';
 /// ref.watch(provRemoteConfigLoader);
 /// ref.read(provRemoteConfigLoader.notifier).load();
 /// ```
-class RunCatchingNotifier<T> extends BaseNotifier<Result<T>> {
-  RunCatchingNotifier({required Future<T> Function(Ref ref) fetch})
+class CallbackResultNotifier<T> extends BaseNotifier<Result<T>> {
+  CallbackResultNotifier({required Future<T> Function(Ref ref) fetch})
     : _fetch = fetch;
 
   final Future<T> Function(Ref ref) _fetch;
@@ -30,7 +30,7 @@ class RunCatchingNotifier<T> extends BaseNotifier<Result<T>> {
   Future<T?> load() {
     return runCatching(
       () => _fetch(ref),
-      identifier: "load",
+      identifier: 'load',
       setState: (result) => state = result,
     );
   }

@@ -1,10 +1,10 @@
 import 'package:tapped_riverpod/tapped_riverpod.dart';
 import 'package:test/test.dart';
 
-NotifierProvider<RunCatchingNotifier<T>, Result<T>> _provider<T>(
+NotifierProvider<CallbackResultNotifier<T>, Result<T>> _provider<T>(
   Future<T> Function(Ref ref) fetch,
 ) {
-  return NotifierProvider(() => RunCatchingNotifier(fetch: fetch));
+  return NotifierProvider(() => CallbackResultNotifier(fetch: fetch));
 }
 
 void main() {
