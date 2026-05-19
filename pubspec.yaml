@@ -7,20 +7,20 @@ environment:
   sdk: ^3.8.0
 
 dependencies:
-  riverpod: ^3.0.3
+  riverpod: ^3.2.1
   freezed_annotation: ^3.1.0
-  async: ^2.13.0
-  uuid: ^4.5.2
+  async: ^2.13.1
+  uuid: ^4.5.3
 
 dev_dependencies:
-  build_runner: ^2.10.1
-  json_serializable: ^6.11.1
-  freezed: ^3.2.3
+  build_runner: ^2.15.0
+  json_serializable: ^6.14.0
+  freezed: ^3.2.5
   flutter_lints: ^6.0.0
   tapped_lints:
     git:
       url: https://github.com/tappeddev/tapped_lints.git
       ref: master
-  test: ^1.26.3
+  test: ^1.31.1
 
 
