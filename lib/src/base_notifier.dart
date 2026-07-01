@@ -75,8 +75,8 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   /// Because of this, [init] must be **idempotent** and must not contain
   /// one-time initialization logic.
   ///
-  /// It is safe to use [ref.watch] and [ref.listen] here, but be aware that
-  /// changes to watched providers will cause [build] and therefor also [init] to re-run.
+  /// It is safe to use [Ref.watch] here, but keep in mind: whenever a watched
+  /// provider changes, [build] — and therefore [init] — will re-run.
   ///
   /// See also the documentation of [Notifier.build].
   @protected
