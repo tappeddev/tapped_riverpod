@@ -75,6 +75,61 @@ void main() {
     expect(notifier.operations.isEmpty, true);
   });
 
+  test("a canceled runCatching should complete with null", () async {
+    final container = ProviderContainer();
+
+    final notifier = container.read(_testNotifierProvider.notifier);
+
+    final future = notifier.runCatching<int>(
+      () async {
+        await Future<void>.delayed(const Duration(seconds: 2));
+
+        return 1;
+      },
+      identifier: "test",
+      setState: (result) {},
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    notifier.cancelOperationBy(identifier: "test");
+
+    expect(await future.timeout(const Duration(milliseconds: 500)), isNull);
+  });
+
+  test(
+    "runCatching should return null when the notifier is unmounted",
+    () async {
+      final container = ProviderContainer();
+
+      final subscription = container.listen(
+        _autoDisposeTestNotifierProvider.notifier,
+        (_, _) {},
+      );
+
+      final notifier = subscription.read();
+
+      subscription.close();
+
+      await Future<void>.delayed(Duration.zero);
+
+      bool callInvoked = false;
+
+      final result = await notifier.runCatching<int>(
+        () async {
+          callInvoked = true;
+
+          return 1;
+        },
+        identifier: "test",
+        setState: (result) {},
+      );
+
+      expect(result, isNull);
+      expect(callInvoked, false);
+    },
+  );
+
   test("runCatching should cancel the previous actions", () async {
     final container = ProviderContainer();
 
@@ -319,6 +374,11 @@ void main() {
 final _testNotifierProvider = NotifierProvider<_BaseTestNotifier, String>(
   () => _BaseTestNotifier(),
 );
+
+final _autoDisposeTestNotifierProvider =
+    NotifierProvider.autoDispose<_BaseTestNotifier, String>(
+      () => _BaseTestNotifier(),
+    );
 
 class _BaseTestNotifier extends BaseNotifier<String> {
   CancelableOperation<void>? asyncOperation;
