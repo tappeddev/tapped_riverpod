@@ -1,6 +1,6 @@
 name: tapped_riverpod
 description: "Wrapper for Riverpod that provides basic functionality"
-version: 0.0.1
+version: 1.2.1
 homepage: tapped.dev
 
 environment:
