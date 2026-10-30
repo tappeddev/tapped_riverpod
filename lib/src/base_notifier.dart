@@ -83,7 +83,8 @@ abstract class BaseNotifier<T> extends Notifier<T> {
   T init();
 
   /// Runs the code in [call].
-  /// This method returns null if the operation failed.
+  /// This method returns null if the operation failed, was canceled or the
+  /// notifier is no longer mounted.
   @protected
   @visibleForTesting
   Future<R?> runCatching<R>(
@@ -97,6 +98,8 @@ abstract class BaseNotifier<T> extends Notifier<T> {
 
       setState(result);
     }
+
+    if (!ref.mounted) return null;
 
     final logger = ref.read(BaseNotifier.logger);
 
@@ -120,11 +123,14 @@ abstract class BaseNotifier<T> extends Notifier<T> {
       // and we force-unwrap the result (since call returns a NOT null value)
       // a null-pointer exception will be thrown in the case that the generic type is "void".
       // here is a small description: https://medium.com/flutter-community/the-curious-case-of-void-in-dart-f0535705e529
-      final callResult = await operation.value;
+      // `value` never completes once the operation is canceled.
+      final callResult = await operation.valueOrCancellation();
+
+      if (operation.isCanceled) return null;
 
       result = callResult;
 
-      setStateWhenMounted(ResultSuccess<R>(callResult));
+      setStateWhenMounted(ResultSuccess<R>(callResult as R));
     } catch (error, stacktrace) {
       final displayableError = DisplayableError(
         exception: error,
